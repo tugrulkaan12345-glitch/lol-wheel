@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Ultimate LoL Wheel</title>
+
+<style>
+
+body{
+margin:0;
+background:linear-gradient(180deg,#050505,#140000);
+color:white;
+font-family:Segoe UI;
+text-align:center;
+}
+
+#wrapper{
+display:flex;
+justify-content:center;
+}
+
+.panel{
+width:240px;
+height:100vh;
+background:rgba(0,0,0,.75);
+overflow:auto;
+padding:12px;
+}
+
+#wins{
+border-right:2px solid #1f8f5f;
+}
+
+#black{
+border-left:2px solid #a12a2a;
+}
+
+.champ{
+display:flex;
+align-items:center;
+margin:6px;
+padding:5px;
+border-radius:6px;
+cursor:pointer;
+transition:.2s;
+}
+
+.champ img{
+width:34px;
+margin-right:6px;
+}
+
+.champ:hover{
+background:rgba(255,0,0,.15);
+transform:scale(1.05);
+}
+
+#pointer{
+width:0;
+height:0;
+border-left:25px solid transparent;
+border-right:25px solid transparent;
+border-top:50px solid white;
+margin:auto;
+}
+
+canvas{
+margin-top:10px;
+border-radius:100%;
+box-shadow:0 0 60px rgba(255,0,0,.25);
+}
+
+#spin{
+width:140px;
+height:140px;
+border-radius:100%;
+background:#a00000;
+border:7px solid white;
+color:white;
+font-size:22px;
+position:absolute;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%);
+cursor:pointer;
+}
+
+#stats{
+margin-top:10px;
+}
+
+/* MODAL */
+
+#modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+#card{
+background:#060606;
+padding:15px;
+border-radius:10px;
+}
+
+#splash{
+width:720px;
+border-radius:8px;
+border:3px solid white;
+}
+
+#champName{
+font-size:28px;
+margin-top:8px;
+color:#ffcc66;
+}
+
+#laneText{
+font-size:20px;
+margin-top:4px;
+}
+
+.mbtn{
+padding:10px;
+margin:5px;
+border:none;
+color:white;
+cursor:pointer;
+font-size:15px;
+border-radius:6px;
+}
+
+#winBtn{background:#1f8f5f;}
+#loseBtn{background:#a12a2a;}
+#rerollBtn{background:#8a2f6b;}
+#reviveBtn{background:#4444aa;}
+#resetBtn{background:#222;}
+
+/* REVIVE PICKER */
+
+#reviveModal{
+
+position:fixed;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+height:100%;
+
+background:rgba(0,0,0,.9);
+
+display:none;
+
+overflow:auto;
+
+}
+
+#reviveGrid{
+
+display:flex;
+
+flex-wrap:wrap;
+
+justify-content:center;
+
+padding:20px;
+
+}
+
+.revChamp{
+
+width:120px;
+
+margin:10px;
+
+cursor:pointer;
+
+}
+
+.revChamp img{
+
+width:80px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="wrapper">
+
+<div id="wins" class="panel">
+<h3>WINS</h3>
+<div id="winList"></div>
+</div>
+
+<div>
+
+<div id="pointer"></div>
+
+<div style="position:relative">
+<canvas id="wheel" width="720" height="720"></canvas>
+<button id="spin">SPIN</button>
+</div>
+
+<div id="stats">
+Wins <span id="w">0</span>
+Loss <span id="l">0</span>
+Winrate <span id="wr">0</span>%
+Remain <span id="r">0</span>
+Revive <span id="rev">0</span>
+</div>
+
+<button onclick="openRevive()" id="reviveBtn" class="mbtn">
+REVIVE
+</button>
+
+<button onclick="resetAll()" id="resetBtn" class="mbtn">
+RESET
+</button>
+
+</div>
+
+<div id="black" class="panel">
+<h3>BLACKLIST</h3>
+<div id="blackList"></div>
+</div>
+
+</div>
+
+<!-- SPLASH MODAL -->
+
+<div id="modal">
+
+<div id="card">
+
+<img id="splash">
+
+<div id="champName"></div>
+
+<div id="laneText"></div>
+
+<div>
+
+<button id="winBtn" class="mbtn">
+KAZANDIM
+</button>
+
+<button id="loseBtn" class="mbtn">
+KAYBETTİM
+</button>
+
+<button id="rerollBtn" class="mbtn">
+YENİDEN
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- REVIVE MODAL -->
+
+<div id="reviveModal">
+
+<h2>REVIVE PICK</h2>
+
+<div id="reviveGrid"></div>
+
+<button onclick="closeRevive()" class="mbtn">
+KAPAT
+</button>
+
+</div>
+
+<script>
+
+/* SAME JS BUT REVIVE PICKER ADDED */
+
+const ctx=wheel.getContext("2d")
+
+let champs=[]
+let pool=[]
+let version
+let images={}
+let rotation=0
+let speed=0
+let spinning=false
+let current=null
+let wins=0
+let losses=0
+let revive=0
+let streak=0
+let blacklist=[]
+let lanes=["TOP","JUNGLE","MID","ADC","SUPPORT"]
+
+async function load(){
+
+let v=await fetch(
+"https://ddragon.leagueoflegends.com/api/versions.json")
+
+v=await v.json()
+
+version=v[0]
+
+let data=await fetch(
+"https://ddragon.leagueoflegends.com/cdn/"
++version+
+"/data/en_US/champion.json")
+
+data=await data.json()
+
+champs=Object.values(data.data)
+
+pool=[...champs]
+
+await preload()
+
+draw()
+
+updateRemain()
+
+}
+
+function preload(){
+
+return Promise.all(
+
+champs.map(c=>{
+
+return new Promise(res=>{
+
+let img=new Image()
+
+img.src=
+"https://ddragon.leagueoflegends.com/cdn/"
++version+
+"/img/champion/"
++c.image.full
+
+img.onload=()=>{
+
+images[c.id]=img
+
+res()
+
+}
+
+})
+
+})
+
+)
+
+}
+
+function draw(){
+
+ctx.clearRect(0,0,720,720)
+
+if(pool.length==0)return
+
+let cx=360
+let cy=360
+let step=(Math.PI*2)/pool.length
+
+for(let i=0;i<pool.length;i++){
+
+let start=i*step+rotation
+let end=start+step
+
+ctx.beginPath()
+
+ctx.moveTo(cx,cy)
+
+ctx.arc(cx,cy,320,start,end)
+
+ctx.fillStyle=i%2?"#111":"#550000"
+
+ctx.fill()
+
+}
+
+pool.forEach((c,i)=>{
+
+let ang=i*step+rotation
+
+let x=cx+Math.cos(ang)*280-16
+
+let y=cy+Math.sin(ang)*280-16
+
+ctx.drawImage(images[c.id],x,y,32,32)
+
+})
+
+}
+
+function animate(){
+
+if(!spinning)return
+
+rotation+=speed
+
+speed*=0.985
+
+draw()
+
+if(speed<0.002){
+
+spinning=false
+
+pick()
+
+}
+
+requestAnimationFrame(animate)
+
+}
+
+spin.onclick=function(){
+
+if(spinning)return
+
+speed=.4+Math.random()*.2
+
+spinning=true
+
+animate()
+
+}
+
+function pick(){
+
+let step=(Math.PI*2)/pool.length
+
+let pointer=(Math.PI*1.5-rotation)%(Math.PI*2)
+
+if(pointer<0)pointer+=Math.PI*2
+
+let index=Math.floor(pointer/step)
+
+current=pool[index]
+
+showModal()
+
+}
+
+function showModal(){
+
+modal.style.display="flex"
+
+splash.src=
+"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/"
++current.id+"_0.jpg"
+
+champName.innerText=current.id
+
+laneText.innerText=
+"Lane: "+lanes[Math.floor(Math.random()*5)]
+
+}
+
+winBtn.onclick=function(){
+
+wins++
+
+streak++
+
+if(streak==5){
+
+revive++
+
+streak=0
+
+}
+
+addWin(current)
+
+closeModal()
+
+updateStats()
+
+}
+
+loseBtn.onclick=function(){
+
+losses++
+
+streak=0
+
+blacklist.push(current)
+
+pool=pool.filter(c=>c!=current)
+
+addBlack(current)
+
+closeModal()
+
+draw()
+
+updateStats()
+
+updateRemain()
+
+}
+
+rerollBtn.onclick=function(){
+
+closeModal()
+
+spin.click()
+
+}
+
+/* REVIVE PICKER */
+
+function openRevive(){
+
+if(revive==0)return
+
+reviveModal.style.display="block"
+
+reviveGrid.innerHTML=""
+
+blacklist.forEach(c=>{
+
+let d=document.createElement("div")
+
+d.className="revChamp"
+
+d.innerHTML=
+"<img src='https://ddragon.leagueoflegends.com/cdn/"
++version+
+"/img/champion/"
++c.image.full+
+"'><br>"+c.id
+
+d.onclick=function(){
+
+pool.push(c)
+
+blacklist=blacklist.filter(x=>x!=c)
+
+revive--
+
+draw()
+
+updateStats()
+
+updateRemain()
+
+refreshBlacklist()
+
+closeRevive()
+
+}
+
+reviveGrid.appendChild(d)
+
+})
+
+}
+
+function closeRevive(){
+
+reviveModal.style.display="none"
+
+}
+
+function refreshBlacklist(){
+
+blackList.innerHTML=""
+
+blacklist.forEach(addBlack)
+
+}
+
+function resetAll(){
+
+pool=[...champs]
+
+blacklist=[]
+
+wins=0
+losses=0
+revive=0
+streak=0
+
+draw()
+
+updateStats()
+
+updateRemain()
+
+winList.innerHTML=""
+blackList.innerHTML=""
+
+}
+
+function closeModal(){
+
+modal.style.display="none"
+
+}
+
+function addWin(c){
+
+let d=document.createElement("div")
+
+d.className="champ"
+
+d.innerHTML=
+"<img src='https://ddragon.leagueoflegends.com/cdn/"
++version+
+"/img/champion/"
++c.image.full+
+"'>"+c.id
+
+winList.appendChild(d)
+
+}
+
+function addBlack(c){
+
+let d=document.createElement("div")
+
+d.className="champ"
+
+d.innerHTML=
+"<img src='https://ddragon.leagueoflegends.com/cdn/"
++version+
+"/img/champion/"
++c.image.full+
+"'>"+c.id
+
+blackList.appendChild(d)
+
+}
+
+function updateStats(){
+
+w.innerText=wins
+
+l.innerText=losses
+
+rev.innerText=revive
+
+let total=wins+losses
+
+wr.innerText=
+total?((wins/total)*100).toFixed(1):0
+
+}
+
+function updateRemain(){
+
+r.innerText=pool.length
+
+}
+
+load()
+
+</script>
+
+</body>
+
+</html>
