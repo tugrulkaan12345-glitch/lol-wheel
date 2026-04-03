@@ -862,26 +862,22 @@ drawWheel();
 
 
 fetch(
-
 `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
-
 )
 
 .then(r=>r.json())
 
 .then(d=>{
 
-
-
-allChampions=
-
-Object.values(d.data);
-
-
+allChampions = Object.values(d.data);
 
 load();
 
+if(available.length === 0){
 
+available=[...allChampions];
+
+}
 
 drawWheel();
 
@@ -891,7 +887,7 @@ updateBlack();
 
 updateWins();
 
-
+save();
 
 });
 
