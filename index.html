@@ -1,4 +1,4 @@
-```html
+```
 <!DOCTYPE html>
 <html>
 
@@ -28,24 +28,12 @@ background:#0b0000;
 box-shadow:0 0 25px #ff000033;
 }
 
-.slice{
+#wheel img{
 position:absolute;
-width:50%;
-height:50%;
-transform-origin:100% 100%;
-left:0;
-top:0;
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-.slice img{
 width:52px;
 height:52px;
 border-radius:50%;
 border:2px solid black;
-pointer-events:none;
 }
 
 #pointer{
@@ -110,6 +98,7 @@ margin:3px;
 cursor:pointer;
 transition:.2s;
 }
+
 .panel img:hover{
 transform:scale(1.2);
 }
@@ -150,7 +139,7 @@ Revive: <span id="rev">0</span>
 </div>
 
 <div class="panel" id="blacklist">
-<h3>Blacklist (tıkla revive kullan)</h3>
+<h3>Blacklist (tıkla revive)</h3>
 <div id="bList"></div>
 </div>
 
@@ -172,7 +161,7 @@ let currentRotation = 0;
 
 let lanes=["TOP","MID","JUNGLE","ADC","SUPPORT"];
 
-/* 🔥 SAFE LOAD */
+/* LOAD */
 function load(){
 try{
 available=JSON.parse(localStorage.getItem("available")) || [];
@@ -190,6 +179,7 @@ revive=Number(localStorage.getItem("revive"))||0;
 streak=Number(localStorage.getItem("streak"))||0;
 }
 
+/* SAVE */
 function save(){
 localStorage.setItem("available",JSON.stringify(available));
 localStorage.setItem("blacklist",JSON.stringify(blacklist));
@@ -200,6 +190,7 @@ localStorage.setItem("revive",revive);
 localStorage.setItem("streak",streak);
 }
 
+/* STATS */
 function updateStats(){
 document.getElementById("w").innerText=wins;
 document.getElementById("l").innerText=losses;
@@ -211,30 +202,40 @@ document.getElementById("r").innerText=available.length;
 document.getElementById("rev").innerText=revive;
 }
 
+/* 🔥 YENİ WHEEL (çember sistemi) */
 function drawWheel(){
+
 if(available.length===0) return;
 
 let wheel=document.getElementById("wheel");
 wheel.innerHTML="";
 
-let angle=360/available.length;
+let center = 300;
+let radius = 250;
 
 available.forEach((c,i)=>{
-let d=document.createElement("div");
-d.className="slice";
-d.style.transform=`rotate(${i*angle}deg) skewY(${90-angle}deg)`;
+
+let angle = (i / available.length) * 360;
+let rad = angle * (Math.PI / 180);
+
+let x = center + radius * Math.cos(rad) - 26;
+let y = center + radius * Math.sin(rad) - 26;
 
 let img=document.createElement("img");
+
 img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.id}.png`;
 
-img.style.transform=`skewY(-${90-angle}deg) rotate(${angle/2}deg)`;
+img.style.left=x+"px";
+img.style.top=y+"px";
 
-d.appendChild(img);
-wheel.appendChild(d);
+wheel.appendChild(img);
+
 });
 }
 
+/* SPIN */
 function spin(){
+
 if(available.length===0){
 alert("Yükleniyor...");
 return;
@@ -243,16 +244,15 @@ return;
 let index=Math.floor(Math.random()*available.length);
 current=available[index];
 
-let angle=360/available.length;
 let extra=360*(5+Math.random()*3);
-
-currentRotation += extra - (index*angle);
+currentRotation += extra;
 
 document.getElementById("wheel").style.transform=`rotate(${currentRotation}deg)`;
 
 setTimeout(()=>{showPopup();},4000);
 }
 
+/* POPUP */
 function showPopup(){
 document.getElementById("popup").style.display="flex";
 
@@ -265,6 +265,7 @@ let lane=lanes[Math.floor(Math.random()*lanes.length)];
 document.getElementById("lane").innerText=lane;
 }
 
+/* GAME */
 function win(){
 wins++;
 streak++;
@@ -305,7 +306,7 @@ function close(){
 document.getElementById("popup").style.display="none";
 }
 
-/* 🔥 REVIVE SİSTEMİ */
+/* REVIVE */
 function updateBlack(){
 let div=document.getElementById("bList");
 div.innerHTML="";
@@ -322,7 +323,6 @@ return;
 }
 
 revive--;
-
 available.push(c);
 blacklist=blacklist.filter(x=>x.id!==c.id);
 
@@ -348,6 +348,7 @@ div.appendChild(img);
 });
 }
 
+/* RESET */
 function resetAll(){
 localStorage.clear();
 
@@ -366,7 +367,7 @@ updateWins();
 drawWheel();
 }
 
-/* 🔥 DATA FIX */
+/* START */
 function start(){
 fetch("https://ddragon.leagueoflegends.com/api/versions.json")
 .then(r=>r.json())
@@ -393,7 +394,7 @@ save();
 
 })
 .catch(()=>{
-alert("İnternet veya API hatası!");
+alert("API hatası!");
 });
 }
 
@@ -403,4 +404,3 @@ start();
 
 </body>
 </html>
-```
