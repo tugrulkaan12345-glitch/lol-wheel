@@ -5,677 +5,901 @@
 
 <meta charset="UTF-8">
 
-<title>Ultimate LoL Wheel</title>
+<title>LoL Wheel</title>
 
 <style>
 
 body{
-margin:0;
+
 background:linear-gradient(180deg,#050505,#140000);
+
+font-family:Arial;
+
 color:white;
-font-family:Segoe UI;
+
 text-align:center;
+
+margin:0;
+
 }
 
-#wrapper{
+
+
+#wheel{
+
+width:600px;
+
+height:600px;
+
+border-radius:50%;
+
+border:8px solid #300000;
+
+margin:auto;
+
+position:relative;
+
+overflow:hidden;
+
+transition:4s cubic-bezier(.17,.67,.2,1);
+
+}
+
+
+
+.slice{
+
+position:absolute;
+
+width:50%;
+
+height:50%;
+
+transform-origin:100% 100%;
+
+left:0;
+
+top:0;
+
 display:flex;
-justify-content:center;
-}
 
-.panel{
-width:240px;
-height:100vh;
-background:rgba(0,0,0,.75);
-overflow:auto;
-padding:12px;
-}
-
-#wins{
-border-right:2px solid #1f8f5f;
-}
-
-#black{
-border-left:2px solid #a12a2a;
-}
-
-.champ{
-display:flex;
 align-items:center;
-margin:6px;
-padding:5px;
-border-radius:6px;
-cursor:pointer;
-transition:.2s;
+
+justify-content:center;
+
 }
 
-.champ img{
-width:34px;
-margin-right:6px;
+
+
+.slice img{
+
+width:60px;
+
+height:60px;
+
+border-radius:50%;
+
+border:2px solid black;
+
 }
 
-.champ:hover{
-background:rgba(255,0,0,.15);
-transform:scale(1.05);
-}
+
 
 #pointer{
+
 width:0;
+
 height:0;
-border-left:25px solid transparent;
-border-right:25px solid transparent;
-border-top:50px solid white;
+
+border-left:20px solid transparent;
+
+border-right:20px solid transparent;
+
+border-top:40px solid red;
+
 margin:auto;
+
 }
 
-canvas{
-margin-top:10px;
-border-radius:100%;
-box-shadow:0 0 60px rgba(255,0,0,.25);
-}
 
-#spin{
-width:140px;
-height:140px;
-border-radius:100%;
-background:#a00000;
-border:7px solid white;
-color:white;
-font-size:22px;
-position:absolute;
-left:50%;
-top:50%;
-transform:translate(-50%,-50%);
+
+button{
+
+padding:10px 20px;
+
+border:none;
+
+margin:5px;
+
+border-radius:6px;
+
+font-weight:bold;
+
 cursor:pointer;
+
 }
 
-#stats{
-margin-top:10px;
+
+
+.win{
+
+background:#1f8f5f;
+
+color:white;
+
 }
 
-/* MODAL */
 
-#modal{
+
+.lose{
+
+background:#a12a2a;
+
+color:white;
+
+}
+
+
+
+.reroll{
+
+background:#8a2f6b;
+
+color:white;
+
+}
+
+
+
+#popup{
+
 position:fixed;
+
 top:0;
+
 left:0;
+
 width:100%;
+
 height:100%;
-background:rgba(0,0,0,.9);
+
+background:rgba(0,0,0,.8);
+
 display:none;
+
 justify-content:center;
+
 align-items:center;
+
+flex-direction:column;
+
 }
 
-#card{
-background:#060606;
-padding:15px;
+
+
+#popup img{
+
+width:900px;
+
 border-radius:10px;
+
 }
 
-#splash{
-width:720px;
-border-radius:8px;
-border:3px solid white;
-}
+
 
 #champName{
-font-size:28px;
-margin-top:8px;
-color:#ffcc66;
+
+font-size:40px;
+
+font-weight:bold;
+
+margin-top:10px;
+
 }
 
-#laneText{
-font-size:20px;
-margin-top:4px;
+
+
+#lane{
+
+font-size:25px;
+
+color:#bbb;
+
 }
 
-.mbtn{
-padding:10px;
-margin:5px;
-border:none;
-color:white;
-cursor:pointer;
-font-size:15px;
-border-radius:6px;
-}
 
-#winBtn{background:#1f8f5f;}
-#loseBtn{background:#a12a2a;}
-#rerollBtn{background:#8a2f6b;}
-#reviveBtn{background:#4444aa;}
-#resetBtn{background:#222;}
 
-/* REVIVE PICKER */
-
-#reviveModal{
+.panel{
 
 position:fixed;
 
-top:0;
+top:100px;
+
+width:200px;
+
+background:#111;
+
+padding:10px;
+
+}
+
+
+
+#blacklist{
+
+right:0;
+
+}
+
+
+
+#wins{
 
 left:0;
 
-width:100%;
-
-height:100%;
-
-background:rgba(0,0,0,.9);
-
-display:none;
-
-overflow:auto;
-
 }
 
-#reviveGrid{
 
-display:flex;
-
-flex-wrap:wrap;
-
-justify-content:center;
-
-padding:20px;
-
-}
-
-.revChamp{
-
-width:120px;
-
-margin:10px;
-
-cursor:pointer;
-
-}
-
-.revChamp img{
-
-width:80px;
-
-}
 
 </style>
 
 </head>
 
+
+
 <body>
 
-<div id="wrapper">
 
-<div id="wins" class="panel">
-<h3>WINS</h3>
-<div id="winList"></div>
-</div>
 
-<div>
+<h1>LoL Wheel</h1>
+
+
 
 <div id="pointer"></div>
 
-<div style="position:relative">
-<canvas id="wheel" width="720" height="720"></canvas>
-<button id="spin">SPIN</button>
-</div>
 
-<div id="stats">
-Wins <span id="w">0</span>
-Loss <span id="l">0</span>
-Winrate <span id="wr">0</span>%
-Remain <span id="r">0</span>
-Revive <span id="rev">0</span>
-</div>
 
-<button onclick="openRevive()" id="reviveBtn" class="mbtn">
-REVIVE
-</button>
+<div id="wheel"></div>
 
-<button onclick="resetAll()" id="resetBtn" class="mbtn">
-RESET
-</button>
 
-</div>
 
-<div id="black" class="panel">
-<h3>BLACKLIST</h3>
-<div id="blackList"></div>
-</div>
+<br>
 
-</div>
 
-<!-- SPLASH MODAL -->
 
-<div id="modal">
+<button onclick="spin()">SPIN</button>
 
-<div id="card">
+<button onclick="resetAll()">RESET</button>
+
+
+
+<h3>
+
+Wins: <span id="w">0</span>
+
+Losses: <span id="l">0</span>
+
+Winrate: <span id="wr">0</span>%
+
+Remaining: <span id="r">0</span>
+
+Revive: <span id="rev">0</span>
+
+</h3>
+
+
+
+<div id="popup">
+
+
 
 <img id="splash">
 
+
+
 <div id="champName"></div>
 
-<div id="laneText"></div>
+<div id="lane"></div>
 
-<div>
 
-<button id="winBtn" class="mbtn">
-KAZANDIM
-</button>
 
-<button id="loseBtn" class="mbtn">
-KAYBETTİM
-</button>
+<br>
 
-<button id="rerollBtn" class="mbtn">
-YENİDEN
-</button>
 
-</div>
+
+<button class="win" onclick="win()">KAZANDIM</button>
+
+<button class="lose" onclick="lose()">KAYBETTİM</button>
+
+<button class="reroll" onclick="reroll()">YENİDEN</button>
+
+
 
 </div>
 
-</div>
 
-<!-- REVIVE MODAL -->
 
-<div id="reviveModal">
+<div class="panel" id="blacklist">
 
-<h2>REVIVE PICK</h2>
+<h3>Blacklist</h3>
 
-<div id="reviveGrid"></div>
-
-<button onclick="closeRevive()" class="mbtn">
-KAPAT
-</button>
+<div id="bList"></div>
 
 </div>
+
+
+
+<div class="panel" id="wins">
+
+<h3>Wins</h3>
+
+<div id="wList"></div>
+
+</div>
+
+
 
 <script>
 
-/* SAME JS BUT REVIVE PICKER ADDED */
 
-const ctx=wheel.getContext("2d")
 
-let champs=[]
-let pool=[]
-let version
-let images={}
-let rotation=0
-let speed=0
-let spinning=false
-let current=null
-let wins=0
-let losses=0
-let revive=0
-let streak=0
-let blacklist=[]
-let lanes=["TOP","JUNGLE","MID","ADC","SUPPORT"]
+let version="13.24.1";
 
-async function load(){
 
-let v=await fetch(
-"https://ddragon.leagueoflegends.com/api/versions.json")
 
-v=await v.json()
+let allChampions=[];
 
-version=v[0]
+let available=[];
 
-let data=await fetch(
-"https://ddragon.leagueoflegends.com/cdn/"
-+version+
-"/data/en_US/champion.json")
+let blacklist=[];
 
-data=await data.json()
+let winsList=[];
 
-champs=Object.values(data.data)
 
-pool=[...champs]
 
-await preload()
+let wins=0;
 
-draw()
+let losses=0;
 
-updateRemain()
+let revive=0;
 
-}
+let streak=0;
 
-function preload(){
 
-return Promise.all(
 
-champs.map(c=>{
+let current;
 
-return new Promise(res=>{
 
-let img=new Image()
 
-img.src=
-"https://ddragon.leagueoflegends.com/cdn/"
-+version+
-"/img/champion/"
-+c.image.full
+let lanes=[
 
-img.onload=()=>{
+"TOP",
 
-images[c.id]=img
+"MID",
 
-res()
+"JUNGLE",
+
+"ADC",
+
+"SUPPORT"
+
+];
+
+
+
+function save(){
+
+
+
+localStorage.setItem("available",JSON.stringify(available));
+
+localStorage.setItem("blacklist",JSON.stringify(blacklist));
+
+localStorage.setItem("winsList",JSON.stringify(winsList));
+
+localStorage.setItem("wins",wins);
+
+localStorage.setItem("losses",losses);
+
+localStorage.setItem("revive",revive);
+
+localStorage.setItem("streak",streak);
+
+
 
 }
 
-})
 
-})
 
-)
+function load(){
 
-}
 
-function draw(){
 
-ctx.clearRect(0,0,720,720)
+if(localStorage.getItem("available")){
 
-if(pool.length==0)return
+available=JSON.parse(localStorage.getItem("available"));
 
-let cx=360
-let cy=360
-let step=(Math.PI*2)/pool.length
+}else{
 
-for(let i=0;i<pool.length;i++){
-
-let start=i*step+rotation
-let end=start+step
-
-ctx.beginPath()
-
-ctx.moveTo(cx,cy)
-
-ctx.arc(cx,cy,320,start,end)
-
-ctx.fillStyle=i%2?"#111":"#550000"
-
-ctx.fill()
+available=[...allChampions];
 
 }
 
-pool.forEach((c,i)=>{
 
-let ang=i*step+rotation
 
-let x=cx+Math.cos(ang)*280-16
+if(localStorage.getItem("blacklist"))
 
-let y=cy+Math.sin(ang)*280-16
+blacklist=JSON.parse(localStorage.getItem("blacklist"));
 
-ctx.drawImage(images[c.id],x,y,32,32)
 
-})
 
-}
+if(localStorage.getItem("winsList"))
 
-function animate(){
+winsList=JSON.parse(localStorage.getItem("winsList"));
 
-if(!spinning)return
 
-rotation+=speed
 
-speed*=0.985
+wins=Number(localStorage.getItem("wins"))||0;
 
-draw()
+losses=Number(localStorage.getItem("losses"))||0;
 
-if(speed<0.002){
+revive=Number(localStorage.getItem("revive"))||0;
 
-spinning=false
+streak=Number(localStorage.getItem("streak"))||0;
 
-pick()
+
 
 }
 
-requestAnimationFrame(animate)
 
-}
-
-spin.onclick=function(){
-
-if(spinning)return
-
-speed=.4+Math.random()*.2
-
-spinning=true
-
-animate()
-
-}
-
-function pick(){
-
-let step=(Math.PI*2)/pool.length
-
-let pointer=(Math.PI*1.5-rotation)%(Math.PI*2)
-
-if(pointer<0)pointer+=Math.PI*2
-
-let index=Math.floor(pointer/step)
-
-current=pool[index]
-
-showModal()
-
-}
-
-function showModal(){
-
-modal.style.display="flex"
-
-splash.src=
-"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/"
-+current.id+"_0.jpg"
-
-champName.innerText=current.id
-
-laneText.innerText=
-"Lane: "+lanes[Math.floor(Math.random()*5)]
-
-}
-
-winBtn.onclick=function(){
-
-wins++
-
-streak++
-
-if(streak==5){
-
-revive++
-
-streak=0
-
-}
-
-addWin(current)
-
-closeModal()
-
-updateStats()
-
-}
-
-loseBtn.onclick=function(){
-
-losses++
-
-streak=0
-
-blacklist.push(current)
-
-pool=pool.filter(c=>c!=current)
-
-addBlack(current)
-
-closeModal()
-
-draw()
-
-updateStats()
-
-updateRemain()
-
-}
-
-rerollBtn.onclick=function(){
-
-closeModal()
-
-spin.click()
-
-}
-
-/* REVIVE PICKER */
-
-function openRevive(){
-
-if(revive==0)return
-
-reviveModal.style.display="block"
-
-reviveGrid.innerHTML=""
-
-blacklist.forEach(c=>{
-
-let d=document.createElement("div")
-
-d.className="revChamp"
-
-d.innerHTML=
-"<img src='https://ddragon.leagueoflegends.com/cdn/"
-+version+
-"/img/champion/"
-+c.image.full+
-"'><br>"+c.id
-
-d.onclick=function(){
-
-pool.push(c)
-
-blacklist=blacklist.filter(x=>x!=c)
-
-revive--
-
-draw()
-
-updateStats()
-
-updateRemain()
-
-refreshBlacklist()
-
-closeRevive()
-
-}
-
-reviveGrid.appendChild(d)
-
-})
-
-}
-
-function closeRevive(){
-
-reviveModal.style.display="none"
-
-}
-
-function refreshBlacklist(){
-
-blackList.innerHTML=""
-
-blacklist.forEach(addBlack)
-
-}
-
-function resetAll(){
-
-pool=[...champs]
-
-blacklist=[]
-
-wins=0
-losses=0
-revive=0
-streak=0
-
-draw()
-
-updateStats()
-
-updateRemain()
-
-winList.innerHTML=""
-blackList.innerHTML=""
-
-}
-
-function closeModal(){
-
-modal.style.display="none"
-
-}
-
-function addWin(c){
-
-let d=document.createElement("div")
-
-d.className="champ"
-
-d.innerHTML=
-"<img src='https://ddragon.leagueoflegends.com/cdn/"
-+version+
-"/img/champion/"
-+c.image.full+
-"'>"+c.id
-
-winList.appendChild(d)
-
-}
-
-function addBlack(c){
-
-let d=document.createElement("div")
-
-d.className="champ"
-
-d.innerHTML=
-"<img src='https://ddragon.leagueoflegends.com/cdn/"
-+version+
-"/img/champion/"
-+c.image.full+
-"'>"+c.id
-
-blackList.appendChild(d)
-
-}
 
 function updateStats(){
 
-w.innerText=wins
 
-l.innerText=losses
 
-rev.innerText=revive
+document.getElementById("w").innerText=wins;
 
-let total=wins+losses
+document.getElementById("l").innerText=losses;
 
-wr.innerText=
-total?((wins/total)*100).toFixed(1):0
+
+
+let total=wins+losses;
+
+
+
+let rate= total? Math.round(wins/total*100):0;
+
+
+
+document.getElementById("wr").innerText=rate;
+
+
+
+document.getElementById("r").innerText=available.length;
+
+document.getElementById("rev").innerText=revive;
+
+
 
 }
 
-function updateRemain(){
 
-r.innerText=pool.length
+
+function drawWheel(){
+
+
+
+let wheel=document.getElementById("wheel");
+
+wheel.innerHTML="";
+
+
+
+let angle=360/available.length;
+
+
+
+available.forEach((c,i)=>{
+
+
+
+let d=document.createElement("div");
+
+d.className="slice";
+
+
+
+d.style.transform=
+
+`rotate(${i*angle}deg) skewY(${90-angle}deg)`;
+
+
+
+let img=document.createElement("img");
+
+
+
+img.src=
+
+`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
+
+
+
+img.style.transform=
+
+`skewY(-${90-angle}deg) rotate(${angle/2}deg)`;
+
+
+
+d.appendChild(img);
+
+
+
+wheel.appendChild(d);
+
+
+
+});
+
+
 
 }
 
-load()
+
+
+function spin(){
+
+
+
+let index=
+
+Math.floor(Math.random()*available.length);
+
+
+
+current=available[index];
+
+
+
+let angle=360/available.length;
+
+
+
+let deg=
+
+360*5-(index*angle);
+
+
+
+document.getElementById("wheel")
+
+.style.transform=`rotate(${deg}deg)`;
+
+
+
+setTimeout(()=>{
+
+showPopup();
+
+},4000);
+
+
+
+}
+
+
+
+function showPopup(){
+
+
+
+document.getElementById("popup")
+
+.style.display="flex";
+
+
+
+document.getElementById("splash")
+
+.src=
+
+`https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${current.id}_0.jpg`;
+
+
+
+document.getElementById("champName")
+
+.innerText=current.id.toUpperCase();
+
+
+
+let lane=
+
+lanes[Math.floor(Math.random()*lanes.length)];
+
+
+
+document.getElementById("lane")
+
+.innerText=lane;
+
+
+
+}
+
+
+
+function win(){
+
+
+
+wins++;
+
+streak++;
+
+
+
+winsList.push(current);
+
+
+
+if(streak==5){
+
+revive++;
+
+streak=0;
+
+}
+
+
+
+updateStats();
+
+updateWins();
+
+
+
+save();
+
+
+
+close();
+
+
+
+}
+
+
+
+function lose(){
+
+
+
+losses++;
+
+streak=0;
+
+
+
+blacklist.push(current);
+
+
+
+available=
+
+available.filter(c=>c.id!=current.id);
+
+
+
+updateStats();
+
+updateBlack();
+
+
+
+drawWheel();
+
+
+
+save();
+
+
+
+close();
+
+
+
+}
+
+
+
+function reroll(){
+
+close();
+
+spin();
+
+}
+
+
+
+function close(){
+
+document.getElementById("popup")
+
+.style.display="none";
+
+}
+
+
+
+function updateBlack(){
+
+
+
+let div=
+
+document.getElementById("bList");
+
+
+
+div.innerHTML="";
+
+
+
+blacklist.forEach(c=>{
+
+
+
+let img=document.createElement("img");
+
+
+
+img.src=
+
+`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
+
+
+
+img.width=40;
+
+
+
+div.appendChild(img);
+
+
+
+});
+
+
+
+}
+
+
+
+function updateWins(){
+
+
+
+let div=
+
+document.getElementById("wList");
+
+
+
+div.innerHTML="";
+
+
+
+winsList.forEach(c=>{
+
+
+
+let img=document.createElement("img");
+
+
+
+img.src=
+
+`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
+
+
+
+img.width=40;
+
+
+
+div.appendChild(img);
+
+
+
+});
+
+
+
+}
+
+
+
+function resetAll(){
+
+
+
+localStorage.clear();
+
+
+
+available=[...allChampions];
+
+blacklist=[];
+
+winsList=[];
+
+
+
+wins=0;
+
+losses=0;
+
+revive=0;
+
+streak=0;
+
+
+
+updateStats();
+
+updateBlack();
+
+updateWins();
+
+drawWheel();
+
+
+
+}
+
+
+
+fetch(
+
+`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
+
+)
+
+.then(r=>r.json())
+
+.then(d=>{
+
+
+
+allChampions=
+
+Object.values(d.data);
+
+
+
+load();
+
+
+
+drawWheel();
+
+updateStats();
+
+updateBlack();
+
+updateWins();
+
+
+
+});
+
+
 
 </script>
+
+
 
 </body>
 
