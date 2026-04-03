@@ -25,6 +25,7 @@ position:relative;
 overflow:hidden;
 transition: transform 4s cubic-bezier(.17,.67,.2,1);
 background:#0b0000;
+box-shadow:0 0 25px #ff000033;
 }
 
 .slice{
@@ -65,9 +66,9 @@ font-weight:bold;
 cursor:pointer;
 }
 
-.win{background:#1f8f5f;color:white;}
-.lose{background:#a12a2a;color:white;}
-.reroll{background:#8a2f6b;color:white;}
+.win{background:#1f8f5f;}
+.lose{background:#a12a2a;}
+.reroll{background:#8a2f6b;}
 
 #popup{
 position:fixed;
@@ -84,22 +85,13 @@ z-index:10;
 }
 
 #popup img{
-width:850px;
+width:800px;
 border-radius:10px;
 box-shadow:0 0 40px black;
 }
 
-#champName{
-font-size:42px;
-font-weight:bold;
-margin-top:10px;
-letter-spacing:2px;
-}
-
-#lane{
-font-size:24px;
-color:#bbb;
-}
+#champName{font-size:42px;font-weight:bold;margin-top:10px;}
+#lane{font-size:24px;color:#bbb;}
 
 .panel{
 position:fixed;
@@ -113,7 +105,14 @@ min-height:120px;
 #wins{left:0;}
 #blacklist{right:0;}
 
-.panel img{margin:3px;}
+.panel img{
+margin:3px;
+cursor:pointer;
+transition:.2s;
+}
+.panel img:hover{
+transform:scale(1.2);
+}
 </style>
 </head>
 
@@ -151,7 +150,7 @@ Revive: <span id="rev">0</span>
 </div>
 
 <div class="panel" id="blacklist">
-<h3>Blacklist</h3>
+<h3>Blacklist (tıkla revive kullan)</h3>
 <div id="bList"></div>
 </div>
 
@@ -173,6 +172,24 @@ let currentRotation = 0;
 
 let lanes=["TOP","MID","JUNGLE","ADC","SUPPORT"];
 
+/* 🔥 SAFE LOAD */
+function load(){
+try{
+available=JSON.parse(localStorage.getItem("available")) || [];
+blacklist=JSON.parse(localStorage.getItem("blacklist")) || [];
+winsList=JSON.parse(localStorage.getItem("winsList")) || [];
+}catch{
+available=[];
+blacklist=[];
+winsList=[];
+}
+
+wins=Number(localStorage.getItem("wins"))||0;
+losses=Number(localStorage.getItem("losses"))||0;
+revive=Number(localStorage.getItem("revive"))||0;
+streak=Number(localStorage.getItem("streak"))||0;
+}
+
 function save(){
 localStorage.setItem("available",JSON.stringify(available));
 localStorage.setItem("blacklist",JSON.stringify(blacklist));
@@ -183,25 +200,13 @@ localStorage.setItem("revive",revive);
 localStorage.setItem("streak",streak);
 }
 
-function load(){
-available=JSON.parse(localStorage.getItem("available")) || [];
-blacklist=JSON.parse(localStorage.getItem("blacklist")) || [];
-winsList=JSON.parse(localStorage.getItem("winsList")) || [];
-
-wins=Number(localStorage.getItem("wins"))||0;
-losses=Number(localStorage.getItem("losses"))||0;
-revive=Number(localStorage.getItem("revive"))||0;
-streak=Number(localStorage.getItem("streak"))||0;
-}
-
 function updateStats(){
 document.getElementById("w").innerText=wins;
 document.getElementById("l").innerText=losses;
 
 let total=wins+losses;
-let rate=total?Math.round(wins/total*100):0;
+document.getElementById("wr").innerText=total?Math.round(wins/total*100):0;
 
-document.getElementById("wr").innerText=rate;
 document.getElementById("r").innerText=available.length;
 document.getElementById("rev").innerText=revive;
 }
@@ -217,12 +222,9 @@ let angle=360/available.length;
 available.forEach((c,i)=>{
 let d=document.createElement("div");
 d.className="slice";
-
 d.style.transform=`rotate(${i*angle}deg) skewY(${90-angle}deg)`;
 
 let img=document.createElement("img");
-
-/* 🔥 FIX: doğru icon yolu */
 img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.id}.png`;
 
 img.style.transform=`skewY(-${90-angle}deg) rotate(${angle/2}deg)`;
@@ -233,15 +235,17 @@ wheel.appendChild(d);
 }
 
 function spin(){
-if(available.length===0) return;
+if(available.length===0){
+alert("Yükleniyor...");
+return;
+}
 
 let index=Math.floor(Math.random()*available.length);
 current=available[index];
 
 let angle=360/available.length;
-
-/* 🔥 FIX: sürekli dönen sistem */
 let extra=360*(5+Math.random()*3);
+
 currentRotation += extra - (index*angle);
 
 document.getElementById("wheel").style.transform=`rotate(${currentRotation}deg)`;
@@ -268,6 +272,7 @@ winsList.push(current);
 
 if(streak==5){
 revive++;
+alert("🔥 Revive kazandın!");
 streak=0;
 }
 
@@ -282,7 +287,6 @@ losses++;
 streak=0;
 
 blacklist.push(current);
-
 available=available.filter(c=>c.id!=current.id);
 
 updateStats();
@@ -301,6 +305,7 @@ function close(){
 document.getElementById("popup").style.display="none";
 }
 
+/* 🔥 REVIVE SİSTEMİ */
 function updateBlack(){
 let div=document.getElementById("bList");
 div.innerHTML="";
@@ -309,6 +314,24 @@ blacklist.forEach(c=>{
 let img=document.createElement("img");
 img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.id}.png`;
 img.width=40;
+
+img.onclick=()=>{
+if(revive<=0){
+alert("Revive yok!");
+return;
+}
+
+revive--;
+
+available.push(c);
+blacklist=blacklist.filter(x=>x.id!==c.id);
+
+drawWheel();
+updateBlack();
+updateStats();
+save();
+};
+
 div.appendChild(img);
 });
 }
@@ -343,14 +366,12 @@ updateWins();
 drawWheel();
 }
 
+/* 🔥 DATA FIX */
 function start(){
-
-/* 🔥 FIX: doğru veri çekme */
 fetch("https://ddragon.leagueoflegends.com/api/versions.json")
 .then(r=>r.json())
 .then(v=>{
 version=v[0];
-
 return fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
 })
 .then(r=>r.json())
@@ -360,7 +381,7 @@ allChampions=Object.values(d.data);
 
 load();
 
-if(available.length===0){
+if(!available.length){
 available=[...allChampions];
 }
 
@@ -370,6 +391,9 @@ updateBlack();
 updateWins();
 save();
 
+})
+.catch(()=>{
+alert("İnternet veya API hatası!");
 });
 }
 
