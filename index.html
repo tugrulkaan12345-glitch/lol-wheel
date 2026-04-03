@@ -1,14 +1,12 @@
+```html
 <!DOCTYPE html>
 <html>
 
 <head>
-
 <meta charset="UTF-8">
-
 <title>LoL Wheel</title>
 
 <style>
-
 body{
 background:linear-gradient(180deg,#050505,#140000);
 font-family:Arial;
@@ -18,7 +16,6 @@ margin:0;
 }
 
 #wheel{
-
 width:600px;
 height:600px;
 border-radius:50%;
@@ -26,832 +23,360 @@ border:8px solid #300000;
 margin:40px auto;
 position:relative;
 overflow:hidden;
-
 transition: transform 4s cubic-bezier(.17,.67,.2,1);
-
 background:#0b0000;
-
 }
 
 .slice{
-
 position:absolute;
-
 width:50%;
 height:50%;
-
 transform-origin:100% 100%;
-
 left:0;
 top:0;
-
 display:flex;
 align-items:center;
 justify-content:center;
-
 }
 
 .slice img{
-
 width:52px;
 height:52px;
-
 border-radius:50%;
-
 border:2px solid black;
-
 pointer-events:none;
-
 }
 
 #pointer{
-
 width:0;
 height:0;
-
 border-left:22px solid transparent;
 border-right:22px solid transparent;
-
 border-top:45px solid red;
-
 margin:auto;
-
 }
 
 button{
-
 padding:10px 22px;
-
 border:none;
-
 margin:5px;
-
 border-radius:6px;
-
 font-weight:bold;
-
 cursor:pointer;
-
 }
 
-.win{
-
-background:#1f8f5f;
-color:white;
-
-}
-
-.lose{
-
-background:#a12a2a;
-color:white;
-
-}
-
-.reroll{
-
-background:#8a2f6b;
-color:white;
-
-}
+.win{background:#1f8f5f;color:white;}
+.lose{background:#a12a2a;color:white;}
+.reroll{background:#8a2f6b;color:white;}
 
 #popup{
-
 position:fixed;
-
 top:0;
 left:0;
-
 width:100%;
 height:100%;
-
 background:rgba(0,0,0,.85);
-
 display:none;
-
 justify-content:center;
 align-items:center;
-
 flex-direction:column;
-
 z-index:10;
-
 }
 
 #popup img{
-
 width:850px;
-
 border-radius:10px;
-
 box-shadow:0 0 40px black;
-
 }
 
 #champName{
-
 font-size:42px;
-
 font-weight:bold;
-
 margin-top:10px;
-
 letter-spacing:2px;
-
 }
 
 #lane{
-
 font-size:24px;
-
 color:#bbb;
-
 }
 
 .panel{
-
 position:fixed;
-
 top:120px;
-
 width:200px;
-
 background:#111;
-
 padding:10px;
-
 min-height:120px;
-
 }
 
-#wins{
+#wins{left:0;}
+#blacklist{right:0;}
 
-left:0;
-
-}
-
-#blacklist{
-
-right:0;
-
-}
-
-.panel img{
-
-margin:3px;
-
-}
-
+.panel img{margin:3px;}
 </style>
-
 </head>
-
-
 
 <body>
 
-
-
 <h1>LoL Wheel</h1>
 
-
-
 <div id="pointer"></div>
-
-
-
 <div id="wheel"></div>
 
-
-
 <button onclick="spin()">SPIN</button>
-
 <button onclick="resetAll()">RESET</button>
 
-
-
 <h3>
-
 Wins: <span id="w">0</span>
-
 Losses: <span id="l">0</span>
-
 Winrate: <span id="wr">0</span>%
-
 Remaining: <span id="r">0</span>
-
 Revive: <span id="rev">0</span>
-
 </h3>
 
-
-
 <div id="popup">
-
 <img id="splash">
-
 <div id="champName"></div>
-
 <div id="lane"></div>
-
 <br>
-
 <button class="win" onclick="win()">KAZANDIM</button>
-
 <button class="lose" onclick="lose()">KAYBETTİM</button>
-
 <button class="reroll" onclick="reroll()">YENİDEN</button>
-
 </div>
-
-
 
 <div class="panel" id="wins">
-
 <h3>Wins</h3>
-
 <div id="wList"></div>
-
 </div>
-
-
 
 <div class="panel" id="blacklist">
-
 <h3>Blacklist</h3>
-
 <div id="bList"></div>
-
 </div>
-
-
 
 <script>
 
-
-
 let version;
-
 let allChampions=[];
-
 let available=[];
-
 let blacklist=[];
-
 let winsList=[];
 
-
-
 let wins=0;
-
 let losses=0;
-
 let revive=0;
-
 let streak=0;
 
-
-
 let current;
+let currentRotation = 0;
 
-
-
-let lanes=[
-
-"TOP",
-
-"MID",
-
-"JUNGLE",
-
-"ADC",
-
-"SUPPORT"
-
-];
-
-
+let lanes=["TOP","MID","JUNGLE","ADC","SUPPORT"];
 
 function save(){
-
 localStorage.setItem("available",JSON.stringify(available));
-
 localStorage.setItem("blacklist",JSON.stringify(blacklist));
-
 localStorage.setItem("winsList",JSON.stringify(winsList));
-
 localStorage.setItem("wins",wins);
-
 localStorage.setItem("losses",losses);
-
 localStorage.setItem("revive",revive);
-
 localStorage.setItem("streak",streak);
-
 }
-
-
 
 function load(){
-
-available=
-
-JSON.parse(localStorage.getItem("available")) || [];
-
-
-
-blacklist=
-
-JSON.parse(localStorage.getItem("blacklist")) || [];
-
-
-
-winsList=
-
-JSON.parse(localStorage.getItem("winsList")) || [];
-
-
+available=JSON.parse(localStorage.getItem("available")) || [];
+blacklist=JSON.parse(localStorage.getItem("blacklist")) || [];
+winsList=JSON.parse(localStorage.getItem("winsList")) || [];
 
 wins=Number(localStorage.getItem("wins"))||0;
-
 losses=Number(localStorage.getItem("losses"))||0;
-
 revive=Number(localStorage.getItem("revive"))||0;
-
 streak=Number(localStorage.getItem("streak"))||0;
-
 }
-
-
 
 function updateStats(){
-
 document.getElementById("w").innerText=wins;
-
 document.getElementById("l").innerText=losses;
 
-
-
 let total=wins+losses;
-
-
-
-let rate=
-
-total?Math.round(wins/total*100):0;
-
-
+let rate=total?Math.round(wins/total*100):0;
 
 document.getElementById("wr").innerText=rate;
-
 document.getElementById("r").innerText=available.length;
-
 document.getElementById("rev").innerText=revive;
-
 }
 
-
-
 function drawWheel(){
-
-
-
 if(available.length===0) return;
 
-
-
-let wheel=
-
-document.getElementById("wheel");
-
-
-
+let wheel=document.getElementById("wheel");
 wheel.innerHTML="";
 
-
-
-let angle=
-
-360/available.length;
-
-
+let angle=360/available.length;
 
 available.forEach((c,i)=>{
-
-
-
 let d=document.createElement("div");
-
 d.className="slice";
 
-
-
-d.style.transform=
-
-`rotate(${i*angle}deg) skewY(${90-angle}deg)`;
-
-
+d.style.transform=`rotate(${i*angle}deg) skewY(${90-angle}deg)`;
 
 let img=document.createElement("img");
 
+/* 🔥 FIX: doğru icon yolu */
+img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.id}.png`;
 
-
-img.src=
-
-`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
-
-
-
-img.style.transform=
-
-`skewY(-${90-angle}deg) rotate(${angle/2}deg)`;
-
-
+img.style.transform=`skewY(-${90-angle}deg) rotate(${angle/2}deg)`;
 
 d.appendChild(img);
-
-
-
 wheel.appendChild(d);
-
-
-
 });
-
 }
-
-
 
 function spin(){
-
-
-
 if(available.length===0) return;
 
-
-
-let index=
-
-Math.floor(Math.random()*available.length);
-
-
-
+let index=Math.floor(Math.random()*available.length);
 current=available[index];
 
+let angle=360/available.length;
 
+/* 🔥 FIX: sürekli dönen sistem */
+let extra=360*(5+Math.random()*3);
+currentRotation += extra - (index*angle);
 
-let angle=
+document.getElementById("wheel").style.transform=`rotate(${currentRotation}deg)`;
 
-360/available.length;
-
-
-
-let deg=
-
-360*6-(index*angle);
-
-
-
-document.getElementById("wheel")
-
-.style.transform=
-
-`rotate(${deg}deg)`;
-
-
-
-setTimeout(()=>{
-
-showPopup();
-
-},4000);
-
+setTimeout(()=>{showPopup();},4000);
 }
-
-
 
 function showPopup(){
+document.getElementById("popup").style.display="flex";
 
-
-
-document.getElementById("popup")
-
-.style.display="flex";
-
-
-
-document.getElementById("splash")
-
-.src=
-
+document.getElementById("splash").src=
 `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${current.id}_0.jpg`;
 
+document.getElementById("champName").innerText=current.id.toUpperCase();
 
-
-document.getElementById("champName")
-
-.innerText=current.id.toUpperCase();
-
-
-
-let lane=
-
-lanes[Math.floor(Math.random()*lanes.length)];
-
-
-
-document.getElementById("lane")
-
-.innerText=lane;
-
+let lane=lanes[Math.floor(Math.random()*lanes.length)];
+document.getElementById("lane").innerText=lane;
 }
-
-
 
 function win(){
-
 wins++;
-
 streak++;
-
 winsList.push(current);
 
-
-
 if(streak==5){
-
 revive++;
-
 streak=0;
-
 }
-
-
 
 updateStats();
-
 updateWins();
-
 save();
-
 close();
-
 }
 
-
-
 function lose(){
-
 losses++;
-
 streak=0;
-
-
 
 blacklist.push(current);
 
-
-
-available=
-
-available.filter(
-
-c=>c.id!=current.id
-
-);
-
-
+available=available.filter(c=>c.id!=current.id);
 
 updateStats();
-
 updateBlack();
-
 drawWheel();
-
 save();
-
 close();
-
 }
-
-
 
 function reroll(){
-
 close();
-
 spin();
-
 }
-
-
 
 function close(){
-
-document.getElementById("popup")
-
-.style.display="none";
-
+document.getElementById("popup").style.display="none";
 }
-
-
 
 function updateBlack(){
-
-
-
-let div=
-
-document.getElementById("bList");
-
-
-
+let div=document.getElementById("bList");
 div.innerHTML="";
-
-
 
 blacklist.forEach(c=>{
-
-
-
 let img=document.createElement("img");
-
-
-
-img.src=
-
-`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
-
-
-
+img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.id}.png`;
 img.width=40;
-
-
-
 div.appendChild(img);
-
 });
-
 }
-
-
 
 function updateWins(){
-
-
-
-let div=
-
-document.getElementById("wList");
-
-
-
+let div=document.getElementById("wList");
 div.innerHTML="";
 
-
-
 winsList.forEach(c=>{
-
-
-
 let img=document.createElement("img");
-
-
-
-img.src=
-
-`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
-
-
-
+img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.id}.png`;
 img.width=40;
-
-
-
 div.appendChild(img);
-
 });
-
 }
-
-
 
 function resetAll(){
-
-
-
 localStorage.clear();
 
-
-
 available=[...allChampions];
-
 blacklist=[];
-
 winsList=[];
 
-
-
 wins=0;
-
 losses=0;
-
 revive=0;
-
 streak=0;
 
-
-
 updateStats();
-
 updateBlack();
-
 updateWins();
-
 drawWheel();
-
 }
-
-
 
 function start(){
 
-
-
-fetch(
-
-"https://ddragon.leagueoflegends.com/api/versions.json"
-
-)
-
+/* 🔥 FIX: doğru veri çekme */
+fetch("https://ddragon.leagueoflegends.com/api/versions.json")
 .then(r=>r.json())
-
 .then(v=>{
-
-
-
 version=v[0];
 
-
-
-fetch(
-
-`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
-
-)
-
+return fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
+})
 .then(r=>r.json())
-
 .then(d=>{
 
-
-
-allChampions=
-
-Object.values(d.data);
-
-
+allChampions=Object.values(d.data);
 
 load();
 
-
-
 if(available.length===0){
-
 available=[...allChampions];
-
 }
-
-
 
 drawWheel();
-
 updateStats();
-
 updateBlack();
-
 updateWins();
-
 save();
 
-
-
 });
-
-});
-
 }
-
-
 
 start();
 
-
-
 </script>
 
-
-
 </body>
-
 </html>
+```
